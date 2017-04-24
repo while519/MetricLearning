@@ -10,3 +10,5 @@
 *.log
 
 *.pkl
+
+.idea/.name
