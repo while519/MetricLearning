@@ -1,0 +1,12 @@
+
+*.pyc
+
+*.xml
+
+*.iml
+
+*.ini
+
+*.log
+
+*.pkl
