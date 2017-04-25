@@ -13,12 +13,12 @@ import math
 import time
 import pickle
 
-dataname = 'cora'
+dataname = 'citeseer'
 applyfn = 'softcauchy'
 FORMAT = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 _log = logging.getLogger(dataname + ' experiment')
 _log.setLevel(logging.DEBUG)
-ch_file = logging.FileHandler(filename= 'emb_cosine_'+ applyfn +'.log', mode='w')
+ch_file = logging.FileHandler(filename='lin'+ applyfn +'.log', mode='w')
 ch_file.setLevel(logging.DEBUG)
 ch_file.setFormatter(FORMAT)
 ch = logging.StreamHandler()
@@ -123,12 +123,12 @@ def margincost(pos, neg, marge=.1):
 
 
 # ----------------------------------------------------------------------------
-def TrainFn5Member(fnPr, mapping, Marge):
+def TrainFnMember(fnPr, X, mapping, marge):             # standard margin-based cost
     """
 
     :param fnPr:
     :param mapping:
-    :param Marge:
+    :param marge:
     :return:
     """
 
@@ -138,10 +138,10 @@ def TrainFn5Member(fnPr, mapping, Marge):
 
     list_in = [inpl, inpr, inprn, lrmapping]  # highlighting input argument
 
-    Pr = fnPr(mapping.E.T)  # mapping.E ( K x M) matrix
+    Pr = fnPr(X.dot(mapping.E.T))  # mapping.E (K x N) matrix
     p = Pr[inpr, inpl]  # (L,)
     pln = Pr[inprn, inpl]
-    cost, out = margincost(p, pln, Marge[inpl, inprn])
+    cost, out = margincost(p, pln, marge)
 
     # assumming no other parameters
     gradients_mapping = T.grad(cost, mapping.E)
@@ -210,29 +210,29 @@ def SGDexp(state):
     np.random.seed(state.seed)
 
     # initialize
-    mapping = Mappings(np.random, state.nsamples, state.outdim)  # K x M
+    mapping = Mappings(np.random, state.nfeatures, state.outdim)  # K x M
 
     # Function compilation
     apply_fn = eval(state.applyfn)
-    trainfunc = TrainFn5Member(apply_fn, mapping, P)
+    trainfunc = TrainFnMember(apply_fn, X, mapping, state.marge)
 
     out = []
     outb = []
     outc = []
-    batchsize = math.floor(state.nlinks / state.nbatches)
+    batchsize = math.floor(state.ntrain / state.nbatches)
     state.bestout = np.inf
 
     _log.info('BEGIN TRAINING')
     timeref = time.time()
     for epoch_count in range(1, state.totepochs + 1):
         # Shuffling
-        order = np.random.permutation(state.nlinks)
-        trainIdxl = state.Idxl[order]
-        trainIdxr = state.Idxr[order]
+        order = np.random.permutation(state.ntrain)
+        trainIdxl = state.trIdxl[order]
+        trainIdxr = state.trIdxr[order]
 
         listidx = np.arange(state.nsamples, dtype='int32')
         listidx = listidx[np.random.permutation(len(listidx))]
-        trainIdxrn = listidx[np.arange(state.nlinks) % len(listidx)]
+        trainIdxrn = listidx[np.arange(state.ntrain) % len(listidx)]
 
 
         for _ in range(20):
@@ -258,15 +258,18 @@ def SGDexp(state):
             _log.debug('Learning rate: %s LeaveOneOut: %s' % (state.lrmapping, np.mean(outc)))
 
             timeref = time.time()
-            Pr = apply_fn(mapping.E.T).eval()
-            state.train = np.mean(RankScoreIdx(Pr, state.Idxl, state.Idxr))
-            _log.debug('Training set Mean Rank: %s  Score: %s' % (state.train, np.mean(Pr[state.Idxr, state.Idxl])))
+            Pr = apply_fn(X.dot(mapping.E.T)).eval()
+            state.train = np.mean(RankScoreIdx(Pr, state.trIdxl, state.trIdxr))
+            _log.debug('Training set Mean Rank: %s  Score: %s' % (state.train, np.mean(Pr[state.trIdxr, state.trIdxl])))
+            Prall = apply_fn(wholeX.dot(mapping.E.T)).eval()
+            state.test = np.mean(RankScoreIdx(Prall, state.teIdxl, state.teIdxr))
+            _log.debug('Testing set Mean Rank: %s ' % (state.test, ))
             state.cepoch = epoch_count
             f = open(state.savepath + '/' + 'model' + '.pkl', 'wb')  # + str(state.cepoch)
             pickle.dump(mapping, f, -1)
             f.close()
-            savemat('emb_dim' + str(state.outdim) + '_method' + state.applyfn +
-                    '_maxmarge' + str(state.max_marge) + '.mat', {'mappedX': mapping.E.eval()})
+            savemat('linpred_dim' + str(state.outdim) + '_method' + state.applyfn +
+                    '_marge' + str(state.marge) + '.mat', {'A': mapping.E.eval()})
             _log.debug('The saving took %s seconds' % (time.time() - timeref))
             timeref = time.time()
 
@@ -274,7 +277,7 @@ def SGDexp(state):
         outc = []
         out = []
         state.bestout = np.inf
-        state.lrmapping = 1000.
+        state.lrmapping = 100.
         f = open(state.savepath + '/' + 'state.pkl', 'wb')
         pickle.dump(state, f, -1)
         f.close()
@@ -293,29 +296,33 @@ if __name__ == '__main__':
     state.savepath = '../pickled_data'
 
     # load the matlab data file
-    mat = loadmat(datapath + dataname + '.mat')
-    X = np.array(mat['X'], np.float32)
-    I = np.array(mat['I'], np.float32)
-    state.Idxl = np.asarray(I[:, 0].flatten() - 1, dtype='int32')  # numpy indexes start from 0
-    state.Idxr = np.asarray(I[:, 1].flatten() - 1, dtype='int32')
+    mat = loadmat(datapath + 'processed_' + dataname +'.mat')
+    trY = np.array(mat['trY'], np.float32)
+    trIdx1 = np.array(mat['trRowIdx'], np.int32)
+    trIdx2 = np.array(mat['trColumnIdx'], np.int32)
+    teI = np.array(mat['teI'], np.float32)
+    state.teIdxl = np.asarray(teI[:,0].flatten() -1, dtype='int32')      # numpy indexes start from 0
+    state.teIdxr = np.asarray(teI[:,1].flatten() -1, dtype='int32')
+    wholeX = T.as_tensor_variable(np.array(mat['Y'], dtype=theano.config.floatX))
+
 
     state.seed = 213
     state.totepochs = 1200
-    state.lrmapping = 10000.
+    state.lrmapping = 1000.
     state.regterm = .0
-    state.nsamples, state.nfeatures = np.shape(X)
-    state.nlinks = np.shape(state.Idxl)[0]
+    X = T.as_tensor_variable(np.asarray(trY, dtype=theano.config.floatX))  # content matrix
+    # Indpairs = T.cast(theano.shared(np.asarray(np.concatenate([trIdx1, trIdx2], axis=1),
+    #                                    dtype=theano.config.floatX)), 'int32')      # pairs for citation linkages
+    state.trIdxl = np.asarray(trIdx1.flatten() - 1, dtype='int32')  # matlab to numpy indexes conversion
+    state.trIdxr = np.asarray(trIdx2.flatten() - 1, dtype='int32')
+
+    state.nsamples, state.nfeatures = np.shape(trY)
+    state.ntrain = np.shape(trIdx1)[0]
     state.outdim = 30
     state.applyfn = applyfn
-    state.marge = 2e-3
-    state.max_marge = 5e-3
+    state.marge = 0.002
     state.nbatches = 1  # mini-batch SGD is not helping here
     state.neval = 10
-
-    #Y = pca(X, no_dims=30)
-    simi_X = consine_simi(X)
-    np.fill_diagonal(simi_X, 0)
-    dist_X = np.max(simi_X, axis=None) - simi_X
-    P = T.as_tensor_variable(np.asarray(state.max_marge * dist_X, dtype=theano.config.floatX))
+    state.lrparam = 1000.
 
     SGDexp(state)

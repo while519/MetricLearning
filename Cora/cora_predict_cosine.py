@@ -13,10 +13,12 @@ import math
 import time
 import pickle
 
+dataname = 'cora'
+applyfn = 'softcauchy'
 FORMAT = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-_log = logging.getLogger('Cora experiment')
+_log = logging.getLogger(dataname + ' experiment')
 _log.setLevel(logging.DEBUG)
-ch_file = logging.FileHandler(filename='my.log', mode='w')
+ch_file = logging.FileHandler(filename= 'predict_cosine_' + applyfn +'.log', mode='w')
 ch_file.setLevel(logging.DEBUG)
 ch_file.setFormatter(FORMAT)
 ch = logging.StreamHandler()
@@ -293,7 +295,7 @@ if __name__ == '__main__':
     state.savepath = '../pickled_data'
 
     # load the matlab data file
-    mat = loadmat(datapath + 'cora.mat')
+    mat = loadmat(datapath + dataname + '.mat')
     X = np.array(mat['X'], np.float32)
     I = np.array(mat['I'], np.float32)
     state.Idxl = np.asarray(I[:, 0].flatten() - 1, dtype='int32')  # numpy indexes start from 0
@@ -306,11 +308,11 @@ if __name__ == '__main__':
     state.nsamples, state.nfeatures = np.shape(X)
     state.nlinks = np.shape(state.Idxl)[0]
     state.outdim = 30
-    state.applyfn = 'softcauchy'
+    state.applyfn = applyfn
     state.marge = 2e-3
     state.max_marge = 5e-3
     state.nbatches = 1  # mini-batch SGD is not helping here
-    state.neval = 1
+    state.neval = 10
 
     # obtain the cosine similarity measure
     #Y = pca(X, no_dims=30)

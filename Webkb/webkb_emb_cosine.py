@@ -13,10 +13,12 @@ import math
 import time
 import pickle
 
+dataname = 'webkb'
+applyfn = 'softmax'
 FORMAT = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-_log = logging.getLogger('Webkb experiment')
+_log = logging.getLogger(dataname + ' experiment')
 _log.setLevel(logging.DEBUG)
-ch_file = logging.FileHandler(filename='my.log', mode='w')
+ch_file = logging.FileHandler(filename= 'emb_cosine_' + applyfn + '.log', mode='w')
 ch_file.setLevel(logging.DEBUG)
 ch_file.setFormatter(FORMAT)
 ch = logging.StreamHandler()
@@ -272,7 +274,7 @@ def SGDexp(state):
         outc = []
         out = []
         state.bestout = np.inf
-        state.lrmapping = 1000.
+        state.lrmapping = 100.
         f = open(state.savepath + '/' + 'state.pkl', 'wb')
         pickle.dump(state, f, -1)
         f.close()
@@ -291,7 +293,7 @@ if __name__ == '__main__':
     state.savepath = '../pickled_data'
 
     # load the matlab data file
-    mat = loadmat(datapath + 'webkb.mat')
+    mat = loadmat(datapath + dataname + '.mat')
     X = np.array(mat['X'], np.float32)
     I = np.array(mat['I'], np.float32)
     state.Idxl = np.asarray(I[:, 0].flatten() - 1, dtype='int32')  # numpy indexes start from 0
@@ -299,16 +301,16 @@ if __name__ == '__main__':
 
     state.seed = 213
     state.totepochs = 1200
-    state.lrmapping = 10000.
+    state.lrmapping = 1000.
     state.regterm = .0
     state.nsamples, state.nfeatures = np.shape(X)
     state.nlinks = np.shape(state.Idxl)[0]
     state.outdim = 30
-    state.applyfn = 'softcauchy'
+    state.applyfn = applyfn
     state.marge = 2e-3
     state.max_marge = 1e-2
     state.nbatches = 1  # mini-batch SGD is not helping here
-    state.neval = 1
+    state.neval = 10
 
     #Y = pca(X, no_dims=30)
     simi_X = consine_simi(X)
