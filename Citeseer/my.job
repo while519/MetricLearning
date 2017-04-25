@@ -1,0 +1,14 @@
+#! /bin/csh
+#$ -cwd
+#$ -V
+#$ -M yuwu@liv.ac.uk
+#$ -m abe
+#$ -r y
+#$ -o out.tmp
+#$ -e err.tmp
+#$ -N my_citeseer_0
+#$ -l h_rt=71:00:00
+module purge
+echo "Start - `date`"
+python3 citeseer_emb_cosine
+echo "Finish - `date`"
