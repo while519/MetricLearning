@@ -18,7 +18,7 @@ applyfn = 'softmax'
 FORMAT = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 _log = logging.getLogger(dataname +' experiment')
 _log.setLevel(logging.DEBUG)
-ch_file = logging.FileHandler(filename= 'pred_cosine_' + applyfn + '.log', mode='w')
+ch_file = logging.FileHandler(filename= 'pred_perplexity_' + applyfn + '.log', mode='w')
 ch_file.setLevel(logging.DEBUG)
 ch_file.setFormatter(FORMAT)
 ch = logging.StreamHandler()
