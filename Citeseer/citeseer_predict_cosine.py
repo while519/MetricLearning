@@ -209,6 +209,21 @@ def SGDexp(state):
     _log.info(state)
     np.random.seed(state.seed)
 
+    # split the data into training/testing set
+    state.ntrain = math.floor(.9 * state.nlinks)
+    state.ntest = state.nlinks - state.ntrain
+    indices = np.random.permutation(state.nlinks)
+    state.trIdxl = state.Idxl[indices[: state.ntrain]]
+    state.trIdxr = state.Idxr[indices[: state.ntrain]]
+
+    state.teIdxl = state.Idxl[indices[state.ntrain :]]
+    state.teIdxr = state.Idxr[indices[state.ntrain :]]
+
+    state.train = np.mean(RankScoreIdx(simi_X, state.trIdxl, state.trIdxr))
+    _log.debug('Content Only: Training set Mean Rank: %s ' % (state.train,))
+    state.test = np.mean(RankScoreIdx(simi_X, state.teIdxl, state.teIdxr))
+    _log.debug('Content Only: Testing set Mean Rank: %s ' % (state.test,))
+
     # initialize
     mapping = Mappings(np.random, state.nsamples, state.outdim)  # K x M
 
@@ -320,15 +335,5 @@ if __name__ == '__main__':
     np.fill_diagonal(simi_X, 0)
     dist_X = np.max(simi_X, axis=None) - simi_X
     P = T.as_tensor_variable(np.asarray(state.max_marge * dist_X, dtype=theano.config.floatX))
-
-    # split the data into training/testing set
-    state.ntrain = math.floor(.9 * state.nlinks)
-    state.ntest = state.nlinks - state.ntrain
-    indices = np.random.permutation(state.nlinks)
-    state.trIdxl = state.Idxl[indices[: state.ntrain]]
-    state.trIdxr = state.Idxr[indices[: state.ntrain]]
-
-    state.teIdxl = state.Idxl[indices[state.ntrain :]]
-    state.teIdxr = state.Idxr[indices[state.ntrain :]]
 
     SGDexp(state)
