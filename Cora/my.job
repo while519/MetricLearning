@@ -1,12 +1,13 @@
-#! /bin/csh
-#$ -cwd -V
-#$ -M yuwu@liv.ac.uk
+#! /bin/bash
+#$ -pe smp 4
+#$ -cwd
+#$ -V -j y
+#$ -M while725@gmail.com
 #$ -m abe
-#$ -r y
-#$ -o tmp.out
-#$ -e tmp.err
+#$ -o out.tmp
+#$ -N my_citeseer_0
+#$ -l h_rt=71:00:00
 module purge
-module load python/3.3
 echo "Start - `date`"
-python playground.py
+python3 ./citeseer_emb_cosine.py
 echo "Finish - `date`"
