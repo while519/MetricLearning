@@ -119,7 +119,9 @@ def softmax(Y):
     """
     sumY = T.sum(T.sqr(Y), axis=1)  # column sum, sumY.shape = (M,)
     Dist = sumY.dimshuffle('x', 0) + sumY.dimshuffle(0, 'x') - 2 * Y.dot(Y.T)
-    expDist = T.exp(-Dist)
+    max_Dist = T.max(Dist)
+    rebased_Dist = Dist - max_Dist
+    expDist = T.exp(-rebased_Dist)
     expDist = T.fill_diagonal(expDist, 0)
     return expDist / T.sum(expDist, axis=1)  # (M, M) / (M,) : column sum is one
 
