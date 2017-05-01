@@ -393,7 +393,7 @@ if __name__ == '__main__':
     state.outdim = 30
     state.applyfn = applyfn
     state.marge = 2e-3
-    state.max_marge = 5e-3
+    state.max_marge = 0.1
     state.nbatches = 1  # mini-batch SGD is not helping here
     state.neval = 10
     state.perplexity = 20.
@@ -403,7 +403,7 @@ if __name__ == '__main__':
     # Compute P-values
     Q = x2p(X, 1e-5, state.perplexity)
     #P = P + np.transpose(P)        we don't need to approximate the joint probability as in tsne
-    Q = Q / np.sum(Q)
+    #Q = Q / np.sum(Q)
     Q = np.maximum(Q, 1e-12)
     np.fill_diagonal(Q, 0)
     _log.info('Maximum probability value of the fixed perplexitied distribution: %s' % (np.max(Q, axis=None),))

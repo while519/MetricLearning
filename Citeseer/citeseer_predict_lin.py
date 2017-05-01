@@ -320,7 +320,7 @@ if __name__ == '__main__':
     state.ntrain = np.shape(trIdx1)[0]
     state.outdim = 30
     state.applyfn = applyfn
-    state.marge = 0.002
+    state.marge = 0.003
     state.nbatches = 1  # mini-batch SGD is not helping here
     state.neval = 10
     state.lrparam = 1000.

@@ -322,9 +322,9 @@ if __name__ == '__main__':
     state.regterm = .0
     state.nsamples, state.nfeatures = np.shape(X)
     state.nlinks = np.shape(state.Idxl)[0]
-    state.outdim = 30
+    state.outdim = 20
     state.applyfn = applyfn
-    state.marge = 2e-3
+    state.marge = 3e-3
     state.max_marge = 5e-3
     state.nbatches = 1  # mini-batch SGD is not helping here
     state.neval = 10

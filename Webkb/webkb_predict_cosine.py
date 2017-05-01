@@ -325,7 +325,7 @@ if __name__ == '__main__':
     state.outdim = 30
     state.applyfn = applyfn
     state.marge = 2e-3
-    state.max_marge = 0.02
+    state.max_marge = 0.01
     state.nbatches = 1  # mini-batch SGD is not helping here
     state.neval = 10
 
