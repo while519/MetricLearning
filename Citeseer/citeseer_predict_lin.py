@@ -15,10 +15,11 @@ import pickle
 
 dataname = 'citeseer'
 applyfn = 'softcauchy'
+outdim = 20
 FORMAT = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 _log = logging.getLogger(dataname + ' experiment')
 _log.setLevel(logging.DEBUG)
-ch_file = logging.FileHandler(filename='lin'+ applyfn +'.log', mode='w')
+ch_file = logging.FileHandler(filename='lin'+ applyfn + str(outdim) +'.log', mode='w')
 ch_file.setLevel(logging.DEBUG)
 ch_file.setFormatter(FORMAT)
 ch = logging.StreamHandler()
@@ -318,9 +319,9 @@ if __name__ == '__main__':
 
     state.nsamples, state.nfeatures = np.shape(trY)
     state.ntrain = np.shape(trIdx1)[0]
-    state.outdim = 30
+    state.outdim = outdim
     state.applyfn = applyfn
-    state.marge = 0.002
+    state.marge = 0.003
     state.nbatches = 1  # mini-batch SGD is not helping here
     state.neval = 10
     state.lrparam = 1000.

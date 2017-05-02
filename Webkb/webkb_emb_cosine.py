@@ -15,10 +15,11 @@ import pickle
 
 dataname = 'webkb'
 applyfn = 'softmax'
+outdim = 20
 FORMAT = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 _log = logging.getLogger(dataname + ' experiment')
 _log.setLevel(logging.DEBUG)
-ch_file = logging.FileHandler(filename= 'emb_cosine_' + applyfn + '.log', mode='w')
+ch_file = logging.FileHandler(filename= 'emb_cosine_' + applyfn + str(outdim) + '.log', mode='w')
 ch_file.setLevel(logging.DEBUG)
 ch_file.setFormatter(FORMAT)
 ch = logging.StreamHandler()
@@ -305,9 +306,9 @@ if __name__ == '__main__':
     state.regterm = .0
     state.nsamples, state.nfeatures = np.shape(X)
     state.nlinks = np.shape(state.Idxl)[0]
-    state.outdim = 30
+    state.outdim = outdim
     state.applyfn = applyfn
-    state.marge = 2e-3
+    state.marge = 1e-3
     state.max_marge = 1e-2
     state.nbatches = 1  # mini-batch SGD is not helping here
     state.neval = 10
