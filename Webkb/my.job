@@ -1,13 +1,14 @@
 #! /bin/bash
-#$ -pe smp 4
+#$ -pe mpi 1
 #$ -cwd
 #$ -V -j y
 #$ -M while725@gmail.com
 #$ -m abe
-#$ -o out.tmp
-#$ -N my_citeseer_0
+#$ -o out.webkb_knn_margeratio_dim
+#$ -N webkb_knn_margeratio_dim
 #$ -l h_rt=71:00:00
+echo "This code is running on " ; hostname
 module purge
 echo "Start - `date`"
-python3 ./citeseer_emb_cosine.py
+python3 ./webkb_predict_knn.py
 echo "Finish - `date`"
