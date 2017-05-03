@@ -7,8 +7,9 @@
 #$ -o out.webkb_knn_margeratio_dim
 #$ -N webkb_knn_margeratio_dim
 #$ -l h_rt=71:00:00
+#$ -l h_vmem=20000M
+#$ -l h="comp[2-9]*|comp1[1-9]*"
 echo "This code is running on " ; hostname
-module purge
 echo "Start - `date`"
-python3 ./webkb_predict_knn.py
+python ./webkb_predict_knn.py
 echo "Finish - `date`"
