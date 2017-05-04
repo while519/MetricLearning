@@ -287,3 +287,45 @@ def TrainFnMember(fnPr, X, mapping, marge):  # standard margin-based cost
         """
     return theano.function(list_in, [T.mean(cost), T.mean(out), T.mean(p)],
                            updates=updates, on_unused_input='ignore')
+
+# ----------------------------------------------------------------------------
+def TrainFn3Member(fnPr, mapping, marge):
+    """
+    :param fnPr:
+    :param mapping:
+    :param marge:
+    :return:
+    """
+
+    # define the required symbolic input
+    inpl, inpr, inprn = T.ivectors(3)
+    lrmapping = T.scalar('lrmapping')  # learning rate
+
+    list_in = [inpl, inpr, inprn, lrmapping]  # highlighting input argument
+
+    Pr = fnPr(mapping.E.T)  # mapping.E ( K x M) matrix
+    p = Pr[inpr, inpl]  # (L,)
+    pln = Pr[inprn, inpl]
+    cost, out = margincost(p, pln, marge)
+
+    # assumming no other parameters
+    gradients_mapping = T.grad(cost, mapping.E)
+    newE = mapping.E - lrmapping * gradients_mapping
+    updates = OrderedDict({mapping.E: newE})
+
+    """
+        Theano function inputs.
+        :input lrmapping: learning rate for the mapping matrix.
+        :input inpl: vector representing the indexes of the positive
+                     citations 'left' member, shape=(#examples,).
+        :input inpr: vector representing the indexes of the positive
+                     citations 'right' member, shape=(#examples,).
+        :input inpln: vector representing the indexes of the negative
+                     citations 'left' member, shape=(#examples,).
+        Theano function output.
+        :output mean(cost): average cost.
+        :output mean(out): ratio of examples for which the margin is violated,
+                           i.e. for which an update occurs.
+        """
+    return theano.function(list_in, [T.mean(cost), T.mean(out), T.mean(p)],
+                           updates=updates, on_unused_input='ignore', allow_input_downcast=True)
