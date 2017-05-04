@@ -7,9 +7,9 @@
 #$ -o out.cora_knn_margeratio_dim
 #$ -N cora_knn_margeratio_dim
 #$ -l h_rt=71:00:00
-#$ -l h_vmem=20000M
+#$ -l h_vmem=16000M
 #$ -l h="comp[2-9]*|comp1[1-9]*"
 echo "This code is running on " ; hostname
 echo "Start - `date`"
-python ./cora_predict_knn.py
+python3 ./cora_predict_knn.py
 echo "Finish - `date`"
