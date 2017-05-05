@@ -1,0 +1,16 @@
+#! /bin/bash
+#$ -pe mpi 1
+#$ -cwd
+#$ -V -j y
+#$ -M while725@gmail.com
+#$ -m abe
+#$ -o out.citeseer_knn_margeratio_dim
+#$ -N citeseer_knn_margeratio_dim
+#$ -l h_rt=71:00:00
+#$ -l h_vmem=16000M
+#$ -l h="comp[2-9]*|comp1[1-9]*"
+#$ -t 1-15
+echo "This code is running on " ; hostname
+echo "Start - `date`"
+python3 ./citeseer_predict_lin_$SGE_TASK_ID.py
+echo "Finish - `date`"
