@@ -164,6 +164,11 @@ def margincost(pos, neg, marge=.1):
     return T.mean(out * (out > 0)), out > 0
 
 # ----------------------------------------------------------------------------
+def margincost1(pos, neg, marge=.1):
+    out = T.log(neg) - T.log(pos) + marge
+    return T.mean(out * (out > 0)), out > 0
+
+# ----------------------------------------------------------------------------
 def RankScoreIdx(Pr, idxl, idxr):
     err = []
     for l, r in zip(idxl, idxr):
@@ -329,3 +334,47 @@ def TrainFn3Member(fnPr, mapping, marge):
         """
     return theano.function(list_in, [T.mean(cost), T.mean(out), T.mean(p)],
                            updates=updates, on_unused_input='ignore', allow_input_downcast=True)
+
+# ----------------------------------------------------------------------------
+def TrainFn6Member(fnPr, mapping, Marge):
+    """
+    learn directly the embedded points from the (generalised) margin cost
+    :param fnPr: function that convert embeddings into probabilities
+    :param mapping: mapped points that are updated on each gradient step
+    :param Marge: a matrix that contains all margins
+    :return: a function that performs a gradient step to learn the mapped points
+    """
+
+    # define the required symbolic input
+    inpl, inpr, inprn = T.ivectors(3)
+    lrmapping = T.scalar('lrmapping')  # learning rate
+
+    list_in = [inpl, inpr, inprn, lrmapping]  # highlighting input argument
+
+    Pr = fnPr(mapping.E.T) + T.constant(1e-12)  # mapping.E ( K x M) matrix
+    p = Pr[inpr, inpl]  # (L,)
+    pln = Pr[inprn, inpl]
+    cost, out = margincost1(p, pln, Marge[inpl, inprn])
+
+    # assumming no other parameters
+    gradients_mapping = T.grad(cost, mapping.E)
+    newE = mapping.E - lrmapping * gradients_mapping
+    updates = OrderedDict({mapping.E: newE})
+
+    """
+        Theano function inputs.
+        :input lrmapping: learning rate for the mapping matrix.
+        :input inpl: vector representing the indexes of the positive
+                     citations 'left' member, shape=(#examples,).
+        :input inpr: vector representing the indexes of the positive
+                     citations 'right' member, shape=(#examples,).
+        :input inpln: vector representing the indexes of the negative
+                     citations 'left' member, shape=(#examples,).
+
+        Theano function output.
+        :output mean(cost): average cost.
+        :output mean(out): ratio of examples for which the margin is violated,
+                           i.e. for which an update occurs.
+        """
+    return theano.function(list_in, [T.mean(cost), T.mean(out), T.mean(p)],
+                           updates=updates, on_unused_input='ignore')
